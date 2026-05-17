@@ -239,6 +239,8 @@
       display: flex;
       width: 300vw;
       height: 100%;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
     }
 
     .scene {
@@ -247,12 +249,16 @@
       height: 100vh;
       min-height: 100vh;
       padding: clamp(24px, 5vw, 72px);
+      background-color: #050505;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      background-attachment: fixed;
+      background-attachment: scroll;
       display: grid;
       align-items: center;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
     }
 
     .scene::before {
@@ -666,32 +672,54 @@
 
     .intro-content {
       position: relative;
-      width: 200px;
-      height: 200px;
+      width: min(1200px, 92vw);
+      min-height: 280px;
       display: grid;
       place-items: center;
+      text-align: center;
+      gap: 14px;
     }
 
-    .intro-mono {
+    .intro-brand {
       font-family: "Bebas Neue", sans-serif;
-      font-size: 200px;
-      color: var(--yellow);
-      line-height: 1;
-      letter-spacing: 0.1em;
+      font-size: clamp(78px, 13vw, 190px);
+      color: var(--white);
+      line-height: 0.9;
+      letter-spacing: 0.06em;
       position: relative;
       z-index: 2;
-      text-shadow: 0 0 40px rgba(245, 197, 24, 0.6);
+      text-shadow: 0 0 44px rgba(245, 197, 24, 0.36);
+    }
+
+    .intro-brand::after {
+      content: " |";
+      color: var(--yellow);
+      animation: blink 1s infinite;
+    }
+
+    .intro-tag {
+      position: relative;
+      z-index: 2;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--yellow);
     }
 
     .intro-ring {
       position: absolute;
-      inset: 0;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       border: 2px solid var(--yellow);
       border-radius: 50%;
       width: 60px;
       height: 60px;
       box-shadow: 0 0 28px rgba(245, 197, 24, 0.5);
       animation: pulse-ring 1.5s ease-out forwards;
+      pointer-events: none;
+      z-index: 1;
     }
 
     @keyframes pulse-ring {
@@ -1472,13 +1500,14 @@
 
     if (!reduceMotion) {
       lenis = new Lenis({
-        duration: 2.4,
+        duration: 2.8,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         lerp: 0.04,
         smoothWheel: true,
-        wheelMultiplier: 0.6,
-        touchMultiplier: 0.8
+        wheelMultiplier: 0.42,
+        touchMultiplier: 0.62
       });
+      lenis.stop();
 
       lenis.on("scroll", () => {
         ScrollTrigger.update();
@@ -1511,12 +1540,12 @@
         scrollTrigger: {
           trigger: ".showcase",
           start: "top top",
-          end: "+=500vh",
+          end: "+=700vh",
           pin: true,
-          scrub: 3.5,
+          scrub: 4.8,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          onLeave: () => ScrollTrigger.refresh()
+          fastScrollEnd: true
         }
       });
 
@@ -1533,7 +1562,7 @@
             containerAnimation: showcaseTimeline,
             start: "left 78%",
             end: "left 32%",
-            scrub: 3.5
+            scrub: 4.8
           }
         });
       });
@@ -1548,7 +1577,7 @@
           containerAnimation: showcaseTimeline,
           start: "left 82%",
           end: "left 42%",
-          scrub: 3.5
+          scrub: 4.8
         }
       });
 
@@ -1649,23 +1678,31 @@
     // Page load intro
     const introOverlay = document.createElement("div");
     introOverlay.id = "intro-overlay";
-    introOverlay.innerHTML = '<div class="intro-content"><div class="intro-mono">YC</div><div class="intro-ring"></div></div>';
+    introOverlay.innerHTML = `<div class="intro-content"><div class="intro-brand">YUGI'S CUSTOMS</div><div class="intro-tag">ENGINEERED FOR SPEED. BUILT FOR IDENTITY.</div><div class="intro-ring"></div></div>`;
     document.body.prepend(introOverlay);
 
     if (!reduceMotion) {
+      gsap.fromTo("#intro-overlay .intro-brand",
+        { y: -180, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.35, ease: "power4.out" }
+      );
+      gsap.fromTo("#intro-overlay .intro-tag",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.9, delay: 0.45, ease: "power3.out" }
+      );
       gsap.to("#intro-overlay .intro-ring", {
         width: 280,
         height: 280,
-        duration: 1.5,
+        duration: 1.6,
         ease: "power2.out"
       });
       gsap.to("#intro-overlay", {
         opacity: 0,
         pointerEvents: "none",
-        delay: 1.8,
-        duration: 0.8
+        delay: 2.1,
+        duration: 0.7
       });
-      setTimeout(() => { if (lenis) lenis.start?.(); }, 2600);
+      setTimeout(() => { if (lenis) lenis.start?.(); }, 2800);
     } else {
       gsap.set("#intro-overlay", { opacity: 0, pointerEvents: "none" });
     }
@@ -1728,6 +1765,14 @@
       setTimeout(() => {
         ScrollTrigger.refresh(true);
       }, 500);
+    });
+
+    window.addEventListener("pageshow", () => {
+      ScrollTrigger.refresh(true);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) ScrollTrigger.refresh(true);
     });
 
     const cursor = document.getElementById("cursor");
